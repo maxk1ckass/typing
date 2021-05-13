@@ -1,0 +1,180 @@
+<html>
+  <head>
+    <script src="./majortests_words.js"></script>
+    <style>
+      #typing-area {
+        margin: 15% auto;
+        width: 500px;
+        font-size: 2rem;
+        font-family: "Courier New", Courier, monospace;
+        word-spacing: 100%;
+        word-wrap: break-word;
+        /* line-break: anywhere; */
+      }
+
+      #word {
+        font-size: 3rem;
+      }
+
+      .previous {
+        background-color: beige;
+      }
+
+      .current {
+        color: white;
+        background-color: black;
+      }
+
+      .next {
+        background-color: white;
+      }
+
+      .enter {
+        padding: 0 0 0 1rem;
+      }
+
+      .failed {
+        background-color: brown;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="typing-area">
+      <div id="word">abandon</div>
+      <div id="type">verb</div>
+      <hr />
+      <div id="definition">definition...</div>
+    </div>
+  </body>
+
+  <!-- main scripts -->
+
+  <script>
+    const dictMajortests = window.majortests;
+    let currentWord = null;
+    let currentCursor = 0;
+    let currentChar = null;
+    let errors = {};
+    let totalLength = 0;
+
+    const showRandomWord = (dict) => {
+      let index = Math.floor(Math.random() * dict.length);
+      currentWord = dict[index];
+      currentCursor = 0;
+      // resrt failed keys
+      failed = {};
+      // render the word with initial cursor
+      renderWord(currentWord, 0);
+    };
+
+    const renderWord = (wordData, cursor) => {
+      let { word, type, definition } = wordData;
+
+      // append a return to "word"
+      word += "\n";
+
+      totalLength = word.length + type.length + definition.length;
+
+      // render paragraphs
+      renderParagraph(
+        document.querySelector("#word"),
+        word.toLowerCase(),
+        0,
+        cursor
+      );
+      renderParagraph(
+        document.querySelector("#type"),
+        type,
+        word.length,
+        cursor
+      );
+      renderParagraph(
+        document.querySelector("#definition"),
+        definition,
+        word.length + type.length,
+        cursor
+      );
+
+      // print statistics
+    };
+
+    const renderParagraph = (dom, content, startIndex, cursor) => {
+      // clear previous content
+      dom.innerHTML = "";
+
+      let index = startIndex;
+      content.split("").forEach((char) => {
+        if (char === " ") {
+          char = "&nbsp;";
+        } else if (char === "\n") {
+          char = "&#9166;";
+        }
+
+        let ele = document.createElement("span");
+        ele.innerHTML = char;
+
+        if (index < cursor) {
+          ele.classList.add("previous");
+        } else if (index === cursor) {
+          currentChar = char;
+          ele.classList.add("current");
+        } else {
+          ele.classList.add("next");
+        }
+
+        if (failed[index]) {
+          ele.classList.add("failed");
+        }
+
+        if (char === "&#9166;") {
+          ele.classList.add("enter");
+        }
+
+        dom.appendChild(ele);
+
+        ++index;
+      });
+    };
+
+    //
+    //
+    //
+    // show initial random word
+    //
+    //
+    //
+    showRandomWord(dictMajortests);
+
+    // bind keyboard event
+    window.addEventListener("keydown", (e) => {
+      console.log(e.code, e.key);
+
+      let key = e.key;
+
+      if (key === " ") {
+        key = "&nbsp;";
+      } else if (key === "Enter") {
+        key = "&#9166;";
+      }
+
+      // move cursor if the correct key is pressed
+      if (key === currentChar) {
+        ++currentCursor;
+      }
+      // mark error if the wrong key pressed
+      else {
+        failed[currentCursor] = true;
+      }
+
+      // if we finished this word, render a new random word
+      if (currentCursor === totalLength) {
+        showRandomWord(dictMajortests);
+      }
+      // otherwise, rerender the current word
+      else {
+        renderWord(currentWord, currentCursor);
+      }
+    });
+  </script>
+</html>
